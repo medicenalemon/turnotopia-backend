@@ -67,9 +67,9 @@ const seedDB = async () => {
     console.log('🗑️  Datos anteriores eliminados');
 
     // Create admin user
-    const admin = await User.create({ name: 'Administrador', email: 'admin@turnotopia.com', password: 'admin123', role: 'admin' });
+    const admin = await User.create({ name: 'Administrador', email: 'admin@turnotopia.local', password: 'admin123', role: 'admin' });
     const receptionist = await User.create({ name: 'Recepción', email: 'recepcion@turnotopia.com', password: 'recepcion123', role: 'receptionist' });
-    console.log('👤 Usuarios creados (admin@turnotopia.com / admin123)');
+    console.log('👤 Usuarios creados (admin@turnotopia.local / admin123)');
 
     // Create specialties
     const specialties = await Specialty.insertMany(specialtiesData);
@@ -129,7 +129,7 @@ const seedDB = async () => {
 
     console.log('\n✅ Seed completado exitosamente!');
     console.log('🔐 Credenciales de acceso:');
-    console.log('   Admin: admin@turnotopia.com / admin123');
+    console.log('   Admin: admin@turnotopia.local / admin123');
     console.log('   Recepción: recepcion@turnotopia.com / recepcion123');
     console.log('   Médicos: [email]@turnotopia.com / doctor123');
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe, updatePassword, getUsers, updateUser, toggleUserActive } = require('../controllers/auth.controller');
+const { register, login, getMe, updatePassword, getUsers, updateUser, toggleUserActive, publicRegister } = require('../controllers/auth.controller');
 const auth = require('../middleware/auth');
 const authorize = require('../middleware/roleGuard');
 
@@ -17,6 +17,12 @@ router.post('/login', [
   body('email').isEmail().withMessage('Email inválido'),
   body('password').notEmpty().withMessage('La contraseña es requerida')
 ], login);
+
+router.post('/public-register', [
+  body('name').notEmpty().withMessage('El nombre es requerido'),
+  body('email').isEmail().withMessage('Email inválido'),
+  body('password').isLength({ min: 6 }).withMessage('Mínimo 6 caracteres')
+], publicRegister);
 
 router.get('/me', auth, getMe);
 router.put('/password', auth, updatePassword);
