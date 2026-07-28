@@ -10,10 +10,9 @@ exports.getAppointments = async (req, res, next) => {
     const filter = {};
 
     if (date) {
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
+      const [year, month, day] = date.split('-');
+      const dayStart = new Date(year, month - 1, day, 0, 0, 0);
+      const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
       filter.date = { $gte: dayStart, $lte: dayEnd };
     }
 
@@ -87,8 +86,8 @@ exports.createAppointment = async (req, res, next) => {
     const { patient, doctor, date, startTime, endTime, reason, notes } = req.body;
 
     // Check for overlapping appointments
-    const appointmentDate = new Date(date);
-    appointmentDate.setHours(0, 0, 0, 0);
+    const [year, month, day] = date.split('-');
+    const appointmentDate = new Date(year, month - 1, day, 0, 0, 0);
     const nextDay = new Date(appointmentDate);
     nextDay.setDate(nextDay.getDate() + 1);
 
@@ -245,7 +244,8 @@ exports.getAvailableSlots = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Médico no encontrado.' });
     }
 
-    const requestedDate = new Date(date);
+    const [year, month, day] = date.split('-');
+    const requestedDate = new Date(year, month - 1, day, 0, 0, 0);
     const dayOfWeek = requestedDate.getDay();
 
     // Find doctor's schedule for this day
