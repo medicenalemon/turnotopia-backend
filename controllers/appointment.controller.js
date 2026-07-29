@@ -11,16 +11,14 @@ exports.getAppointments = async (req, res, next) => {
 
     if (date) {
       const [year, month, day] = date.split('-');
-      const dayStart = new Date(year, month - 1, day, 0, 0, 0);
-      const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+      const dayStart = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+      const dayEnd = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
       filter.date = { $gte: dayStart, $lte: dayEnd };
     }
 
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(`${startDate}T00:00:00.000Z`);
+      const end = new Date(`${endDate}T23:59:59.999Z`);
       filter.date = { $gte: start, $lte: end };
     }
 
@@ -87,9 +85,9 @@ exports.createAppointment = async (req, res, next) => {
 
     // Check for overlapping appointments
     const [year, month, day] = date.split('-');
-    const appointmentDate = new Date(year, month - 1, day, 0, 0, 0);
+    const appointmentDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
     const nextDay = new Date(appointmentDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     const overlap = await Appointment.findOne({
       doctor,
@@ -245,8 +243,8 @@ exports.getAvailableSlots = async (req, res, next) => {
     }
 
     const [year, month, day] = date.split('-');
-    const requestedDate = new Date(year, month - 1, day, 0, 0, 0);
-    const dayOfWeek = requestedDate.getDay();
+    const requestedDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+    const dayOfWeek = requestedDate.getUTCDay();
 
     // Find doctor's schedule for this day
     const daySchedule = doctor.schedule.find(s => s.dayOfWeek === dayOfWeek);
@@ -274,9 +272,8 @@ exports.getAvailableSlots = async (req, res, next) => {
 
     // Get existing appointments for this doctor on this date
     const dayStart = new Date(requestedDate);
-    dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(requestedDate);
-    dayEnd.setHours(23, 59, 59, 999);
+    dayEnd.setUTCHours(23, 59, 59, 999);
 
     const existingAppointments = await Appointment.find({
       doctor: doctorId,
@@ -356,10 +353,14 @@ exports.completeVisit = async (req, res, next) => {
 // @access  Private
 exports.getWaitingRoom = async (req, res, next) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    
+    const today = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
     const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
     // Get all today's non-cancelled appointments
     const appointments = await Appointment.find({
