@@ -47,6 +47,31 @@ exports.getAppointments = async (req, res, next) => {
   }
 };
 
+// @desc    Get logged in patient's appointments
+// @route   GET /api/appointments/patient/me
+// @access  Private (Patient only)
+exports.getPatientMeAppointments = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ success: false, message: 'Acceso denegado' });
+    }
+
+    const appointments = await Appointment.find({ patient: req.user._id })
+      .populate({
+        path: 'doctor',
+        populate: [
+          { path: 'user', select: 'name' },
+          { path: 'specialty', select: 'name' }
+        ]
+      })
+      .sort({ date: -1, startTime: -1 });
+
+    res.json({ success: true, count: appointments.length, data: appointments });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get single appointment
 // @route   GET /api/appointments/:id
 // @access  Private
