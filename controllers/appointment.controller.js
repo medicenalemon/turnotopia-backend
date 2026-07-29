@@ -246,29 +246,35 @@ exports.getAvailableSlots = async (req, res, next) => {
     const requestedDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
     const dayOfWeek = requestedDate.getUTCDay();
 
-    // Find doctor's schedule for this day
-    const daySchedule = doctor.schedule.find(s => s.dayOfWeek === dayOfWeek);
-    if (!daySchedule) {
+    // Find doctor's schedules for this day
+    const daySchedules = doctor.schedule.filter(s => s.dayOfWeek === dayOfWeek);
+    if (!daySchedules || daySchedules.length === 0) {
       return res.json({ success: true, data: [], message: 'El médico no atiende este día.' });
     }
 
     // Generate all possible slots
     const slots = [];
-    const [startH, startM] = daySchedule.startTime.split(':').map(Number);
-    const [endH, endM] = daySchedule.endTime.split(':').map(Number);
-    const duration = daySchedule.slotDuration || 30;
 
-    let currentMinutes = startH * 60 + startM;
-    const endMinutes = endH * 60 + endM;
+    daySchedules.forEach(daySchedule => {
+      const [startH, startM] = daySchedule.startTime.split(':').map(Number);
+      const [endH, endM] = daySchedule.endTime.split(':').map(Number);
+      const duration = daySchedule.slotDuration || 30;
 
-    while (currentMinutes + duration <= endMinutes) {
-      const slotStart = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}`;
-      const slotEndMin = currentMinutes + duration;
-      const slotEnd = `${String(Math.floor(slotEndMin / 60)).padStart(2, '0')}:${String(slotEndMin % 60).padStart(2, '0')}`;
-      
-      slots.push({ startTime: slotStart, endTime: slotEnd });
-      currentMinutes += duration;
-    }
+      let currentMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+
+      while (currentMinutes + duration <= endMinutes) {
+        const slotStart = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}`;
+        const slotEndMin = currentMinutes + duration;
+        const slotEnd = `${String(Math.floor(slotEndMin / 60)).padStart(2, '0')}:${String(slotEndMin % 60).padStart(2, '0')}`;
+        
+        slots.push({ startTime: slotStart, endTime: slotEnd });
+        currentMinutes += duration;
+      }
+    });
+
+    // Ensure slots are sorted by startTime
+    slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     // Get existing appointments for this doctor on this date
     const dayStart = new Date(requestedDate);
