@@ -126,6 +126,35 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// @desc    Patient Login
+// @route   POST /api/auth/patient-login
+// @access  Public
+exports.patientLogin = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+
+    const { dni, email } = req.body;
+    const Patient = require('../models/Patient');
+    
+    // Case insensitive email search
+    const patient = await Patient.findOne({ dni, email: email.toLowerCase() });
+    if (!patient) return res.status(401).json({ success: false, message: 'Credenciales inválidas o paciente no registrado.' });
+
+    const token = generateToken(patient._id, 'patient');
+
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: { _id: patient._id, name: `${patient.firstName} ${patient.lastName}`, email: patient.email, role: 'patient', isPatient: true }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private
