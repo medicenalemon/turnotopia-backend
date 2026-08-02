@@ -20,7 +20,7 @@ exports.getPatients = async (req, res, next) => {
 
     const total = await Patient.countDocuments(filter);
     const patients = await Patient.find(filter)
-      .sort('-createdAt')
+      .sort({ createdAt: -1, _id: 1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
