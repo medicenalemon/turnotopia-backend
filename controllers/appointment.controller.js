@@ -9,6 +9,18 @@ exports.getAppointments = async (req, res, next) => {
     const { date, doctor, patient, status, startDate, endDate } = req.query;
     const filter = {};
 
+    // Filter by doctor if the logged-in user is a doctor
+    if (req.user.role === 'doctor') {
+      const doctorRecord = await Doctor.findOne({ user: req.user._id });
+      if (doctorRecord) {
+        filter.doctor = doctorRecord._id;
+      } else {
+        filter.doctor = null;
+      }
+    } else if (doctor) {
+      filter.doctor = doctor;
+    }
+
     if (date) {
       const [year, month, day] = date.split('-');
       const dayStart = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
@@ -22,7 +34,6 @@ exports.getAppointments = async (req, res, next) => {
       filter.date = { $gte: start, $lte: end };
     }
 
-    if (doctor) filter.doctor = doctor;
     if (patient) filter.patient = patient;
     if (status) filter.status = status;
 
@@ -197,16 +208,21 @@ exports.updateAppointment = async (req, res, next) => {
 // @access  Private
 exports.updateStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
+    const { status, prescription } = req.body;
     const validStatuses = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show'];
     
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Estado inválido.' });
     }
 
+    const updateData = { status };
+    if (prescription !== undefined) {
+      updateData.prescription = prescription;
+    }
+
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updateData,
       { new: true, runValidators: true }
     )
       .populate({

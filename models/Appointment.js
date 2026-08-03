@@ -39,6 +39,10 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     maxlength: [1000, 'Las notas no pueden exceder 1000 caracteres']
   },
+  prescription: {
+    type: String,
+    maxlength: [2000, 'La receta no puede exceder 2000 caracteres']
+  },
   waitingRoom: {
     checkedInAt: { type: Date },
     calledAt: { type: Date },
